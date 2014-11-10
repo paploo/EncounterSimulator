@@ -1,0 +1,19 @@
+# sbt
+target
+
+# Eclipse
+.cache
+.classpath
+.project
+.settings
+.worksheet
+
+# IntelliJ
+.idea
+.idea_modules
+
+# Vim
+*.sw[a-z]
+
+# MacOS X
+.DS_Store

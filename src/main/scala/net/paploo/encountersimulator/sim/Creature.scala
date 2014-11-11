@@ -6,8 +6,11 @@ trait Creature {
   def damage: Int
   def turnOfDeath: Option[Int]
 
-  def isAlive: Boolean = damage > 0
+  def isAlive: Boolean = damage < hitPoints
   def isDead: Boolean = !isAlive
+
+  def hitPoints: Int = template.hitPoints
+  def damageRate: Int = template.damageRate
 }
 
 case class SimpleCreature(name: String,

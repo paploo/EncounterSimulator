@@ -12,36 +12,36 @@ object Encounter {
 }
 
 trait Encounter {
-  def friends: Seq[Creature]
-  def foes: Seq[Creature]
+  def friends: Party
+  def foes: Party
 
   def friendsEngagementStrategy: EngagementStrategy
   def foesEngagementStrategy: EngagementStrategy
 
   def turn: Int
-  def isFinished: Boolean = !friends.exists(_.isAlive) && !foes.exists(_.isAlive)
+  def isFinished: Boolean = friends.areAllDead || foes.areAllDead
 
   def step: Encounter
 
-  protected def attackResults(attackers: Seq[Creature], defenders: Seq[Creature])(engagementStrategy: EngagementStrategy): Seq[Creature] =
+  protected def attackResults(attackers: Party, defenders: Party)(engagementStrategy: EngagementStrategy): Party =
     applyDamage(defenders)(damageMap(attackIndexMap(attackers, defenders)(engagementStrategy), attackers))
 
   /** Construct a map of attacker indexes to the defender indexes they are attacking. **/
-  private def attackIndexMap(attackers: Seq[Creature], defenders: Seq[Creature])(engagementStrategy: EngagementStrategy): Map[Int,Int] = Map()
+  private def attackIndexMap(attackers: Party, defenders: Party)(engagementStrategy: EngagementStrategy): Map[Int,Int] = Map()
 
   /** Convert the attack map to an index of defender index to the damage they take. **/
-  private def damageMap(attackIndexMap: Map[Int, Int], attackers: Seq[Creature]): Map[Int, Int] = Map()
+  private def damageMap(attackIndexMap: Map[Int, Int], attackers: Party): Map[Int, Int] = Map()
 
   /**
    * Given a list of defenders, apply a damage map, generating a new list of creatures with
    * damage applied.
    */
-  private def applyDamage(defenders: Seq[Creature])(damageMap: Map[Int, Int]): Seq[Creature] = Seq()
+  private def applyDamage(defenders: Party)(damageMap: Map[Int, Int]): Party = Seq()
 }
 
 class BasicEncounter(
-                      val friends: Seq[Creature],
-                      val foes: Seq[Creature],
+                      val friends: Party,
+                      val foes: Party,
                       val turn: Int = 0,
                       val engagementStrategy: EngagementStrategy
                     ) extends Encounter {
@@ -51,8 +51,8 @@ class BasicEncounter(
   override val isFinished: Boolean = super.isFinished
 
   override def step: Encounter = {
-    val steppedFriends: Seq[Creature] = attackResults(friends, foes)(friendsEngagementStrategy)
-    val steppedFoes: Seq[Creature] = attackResults(foes, friends)(foesEngagementStrategy)
+    val steppedFriends: Party = attackResults(friends, foes)(friendsEngagementStrategy)
+    val steppedFoes: Party = attackResults(foes, friends)(foesEngagementStrategy)
     new BasicEncounter(steppedFriends, steppedFoes, turn+1, engagementStrategy)
   }
 }

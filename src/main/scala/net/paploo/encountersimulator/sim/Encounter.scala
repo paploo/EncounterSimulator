@@ -19,14 +19,14 @@ trait Encounter {
   def foesEngagementStrategy: EngagementStrategy
 
   def turn: Int
-  def isFinished: Boolean = friends.areAllDead || foes.areAllDead
+  def isFinished: Boolean = friends.alive.members.isEmpty || foes.alive.members.isEmpty
 
   def step: Encounter
 
   protected def attackResults(attackers: Party, defenders: Party)(engagementStrategy: EngagementStrategy): Party =
     applyDamage(defenders)(damageMap(attackIndexMap(attackers, defenders)(engagementStrategy), attackers))
 
-  /** Construct a map of attacker indexes to the defender indexes they are attacking. **/
+  /** Construct a map of attacker ids to the defender ids they are attacking. **/
   private def attackIndexMap(attackers: Party, defenders: Party)(engagementStrategy: EngagementStrategy): Map[Int,Int] = Map()
 
   /** Convert the attack map to an index of defender index to the damage they take. **/
@@ -36,7 +36,7 @@ trait Encounter {
    * Given a list of defenders, apply a damage map, generating a new list of creatures with
    * damage applied.
    */
-  private def applyDamage(defenders: Party)(damageMap: Map[Int, Int]): Party = Seq()
+  private def applyDamage(defenders: Party)(damageMap: Map[Int, Int]): Party = Party.empty
 }
 
 class BasicEncounter(

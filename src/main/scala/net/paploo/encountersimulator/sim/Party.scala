@@ -26,16 +26,27 @@ trait Party {
   def alive: Party
   def dead: Party
 
-  def apply(id: Int): Creature
+  def applyDamage(damageMap: Map[PartyMember, Int]): Party
+
+  def apply(id: Int): PartyMember
 }
 
 abstract class AbstractParty extends Party {
   override val creatures: Seq[Creature] = members.map(_.creature)
 
-  override def apply(id: Int): Creature = members.find(_.id == id).get.creature
+  override def apply(id: Int): PartyMember = members.find(_.id == id).get
 }
 
 case class PartySeq(members: Seq[PartyMember]) extends AbstractParty {
   override val alive: Party = PartySeq(members.filter(_.creature.isAlive))
   override val dead: Party = PartySeq(members.filter(_.creature.isDead))
+
+  def applyDamage(damageMap: Map[PartyMember, Int]): Party = {
+    val newMembers = members.map { member =>
+      val damage = damageMap(member)
+      val updatedCreature = member.creature.applyDamage(damage)
+      member.copy(creature = updatedCreature)
+    }
+    PartySeq(newMembers)
+  }
 }

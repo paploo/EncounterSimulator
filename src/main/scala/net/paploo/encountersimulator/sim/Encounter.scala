@@ -24,19 +24,38 @@ trait Encounter {
   def step: Encounter
 
   protected def attackResults(attackers: Party, defenders: Party)(engagementStrategy: EngagementStrategy): Party =
-    applyDamage(defenders)(damageMap(attackIndexMap(attackers, defenders)(engagementStrategy), attackers))
+    applyDamage(defenders)(damageMap(defenseMap(attackMap(attackers, defenders)(engagementStrategy))))
 
-  /** Construct a map of attacker ids to the defender ids they are attacking. **/
-  private def attackIndexMap(attackers: Party, defenders: Party)(engagementStrategy: EngagementStrategy): Map[Int,Int] = Map()
+  /** Construct a map of attacker to the defender they are attacking. */
+  private def attackMap(attackers: Party, defenders: Party)(engagementStrategy: EngagementStrategy): Map[PartyMember, PartyMember] = {
+    val pairs = for {
+      attacker <- attackers.alive.members
+      defenderOption = engagementStrategy.defenderPartyMember(attackers, defenders)(attacker)
+      if defenderOption.isDefined
+      defender = defenderOption.get
+    } yield (attacker, defender)
 
-  /** Convert the attack map to an index of defender index to the damage they take. **/
-  private def damageMap(attackIndexMap: Map[Int, Int], attackers: Party): Map[Int, Int] = Map()
+    pairs.toMap
+  }
+
+  /** Given an attackMap, produce a map of defenders by their common attacker */
+
+  private def defenseMap(attackMap: Map[PartyMember, PartyMember]): Map[PartyMember, Seq[PartyMember]] =
+    attackMap.groupBy( _._2 ).map { case (defender, attackerMapForDefender) => defender -> attackerMapForDefender.keys.toSeq}
+
+  /** Convert the defense map to a defender and the total damage they take from their attackers. */
+  private def damageMap(defenseMap: Map[PartyMember, Seq[PartyMember]]): Map[PartyMember, Int] =
+    defenseMap.map { case (defender, attackers) => defender -> attackers.map(_.creature.damageRate).sum}
+
 
   /**
    * Given a list of defenders, apply a damage map, generating a new list of creatures with
    * damage applied.
+   *
+   * All creatures in the original Party must be present in the resulting Party.
    */
-  private def applyDamage(defenders: Party)(damageMap: Map[Int, Int]): Party = Party.empty
+  private def applyDamage(defenders: Party)(damageMap: Map[PartyMember, Int]): Party =
+    defenders.applyDamage(damageMap)
 }
 
 class BasicEncounter(

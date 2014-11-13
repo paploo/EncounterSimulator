@@ -5,12 +5,12 @@ import scala.util.Random
 object EngagementStrategy {
 
   def random: EngagementStrategy = new EngagementStrategyFunction(
-    (attackers, defenders, attackerId) => {
+    (attackers, defenders, attacker) => {
       val aliveDefenders = defenders.alive
       if (aliveDefenders.members.isEmpty) None
       else {
         val len = aliveDefenders.members.length
-        Some(aliveDefenders.members(Random.nextInt(len)).id)
+        Some(aliveDefenders.members(Random.nextInt(len)))
       }
     }
   )
@@ -18,10 +18,10 @@ object EngagementStrategy {
 }
 
 trait EngagementStrategy {
-  def defenderIndex(attackers: Party, defenders: Party)(id: Int): Option[Int]
+  def defenderPartyMember(attackers: Party, defenders: Party)(attacker: PartyMember): Option[PartyMember]
 }
 
-class EngagementStrategyFunction(val func: (Party, Party, Int) => Option[Int]) extends EngagementStrategy {
-  def defenderIndex(attackers: Party, defenders: Party)(id: Int): Option[Int] =
-    func(attackers, defenders, id)
+class EngagementStrategyFunction(val func: (Party, Party, PartyMember) => Option[PartyMember]) extends EngagementStrategy {
+  def defenderPartyMember(attackers: Party, defenders: Party)(attacker: PartyMember): Option[PartyMember] =
+    func(attackers, defenders, attacker)
 }

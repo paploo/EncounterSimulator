@@ -5,10 +5,15 @@ import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
 object Encounter {
-  def run(encounter: Encounter): Future[Encounter] = Future { runLoop(encounter) }
+  def run(encounter: Encounter)(hook: (Encounter) => Any): Future[Encounter] = Future { runLoop(encounter)(hook) }
 
   @tailrec
-  def runLoop(encounter: Encounter): Encounter = if (encounter.isFinished) encounter else runLoop(encounter.step)
+  def runLoop(encounter: Encounter)(hook: (Encounter) => Any): Encounter =
+    if (encounter.isFinished) encounter
+    else {
+      Future { hook(encounter) }
+      runLoop(encounter.step)(hook)
+    }
 }
 
 trait Encounter {
@@ -61,8 +66,8 @@ trait Encounter {
 class BasicEncounter(
                       val friends: Party,
                       val foes: Party,
-                      val turn: Int = 0,
-                      val engagementStrategy: EngagementStrategy
+                      val engagementStrategy: EngagementStrategy,
+                      val turn: Int = 0
                     ) extends Encounter {
   override val friendsEngagementStrategy: EngagementStrategy = engagementStrategy
   override val foesEngagementStrategy: EngagementStrategy = engagementStrategy
@@ -72,6 +77,8 @@ class BasicEncounter(
   override def step: Encounter = {
     val steppedFriends: Party = attackResults(friends, foes)(friendsEngagementStrategy)
     val steppedFoes: Party = attackResults(foes, friends)(foesEngagementStrategy)
-    new BasicEncounter(steppedFriends, steppedFoes, turn+1, engagementStrategy)
+    new BasicEncounter(steppedFriends, steppedFoes, engagementStrategy, turn+1)
   }
+
+  override def toString: String = s"BasicEncounter([$turn] $friends vs $foes)"
 }

@@ -1,6 +1,10 @@
 package net.paploo.encountersimulator.app
 
 import net.paploo.encountersimulator.sim._
+import scala.concurrent.Await
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.Duration
+import scala.util.{Failure, Success}
 
 object App {
 
@@ -20,8 +24,14 @@ object App {
 
     val encounter = new BasicEncounter(friends, foes, EngagementStrategy.random)
 
-    Encounter.run(encounter) { (enc: Encounter) => println(enc)}
+    val f = Encounter.run(encounter) { (enc: Encounter) => println(enc)}
 
+    f.onComplete {
+      case Success(_) => println("Ran Successfully")
+      case Failure(e) => println(s"ERROR: $e")
+    }
+
+    Await.ready(f, Duration.Inf)
     println("Done.")
   }
 

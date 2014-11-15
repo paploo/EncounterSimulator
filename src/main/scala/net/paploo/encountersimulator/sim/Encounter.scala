@@ -8,12 +8,10 @@ object Encounter {
   def run(encounter: Encounter)(hook: (Encounter) => Any): Future[Encounter] = Future { runLoop(encounter)(hook) }
 
   @tailrec
-  def runLoop(encounter: Encounter)(hook: (Encounter) => Any): Encounter =
-    if (encounter.isFinished) encounter
-    else {
-      Future { hook(encounter) }
-      runLoop(encounter.step)(hook)
-    }
+  def runLoop(encounter: Encounter)(hook: (Encounter) => Any): Encounter = {
+    Future {hook(encounter)}
+    if (encounter.isFinished) encounter else runLoop(encounter.step)(hook)
+  }
 }
 
 trait Encounter {
@@ -24,7 +22,7 @@ trait Encounter {
   def foesEngagementStrategy: EngagementStrategy
 
   def turn: Int
-  def isFinished: Boolean = friends.alive.members.isEmpty || foes.alive.members.isEmpty
+  def isFinished: Boolean = friends.isDead || foes.isDead
 
   def step: Encounter
 
@@ -67,7 +65,7 @@ class BasicEncounter(
                       val friends: Party,
                       val foes: Party,
                       val engagementStrategy: EngagementStrategy,
-                      val turn: Int = 0
+                      val turn: Int = 1
                     ) extends Encounter {
   override val friendsEngagementStrategy: EngagementStrategy = engagementStrategy
   override val foesEngagementStrategy: EngagementStrategy = engagementStrategy
@@ -80,5 +78,5 @@ class BasicEncounter(
     new BasicEncounter(steppedFriends, steppedFoes, engagementStrategy, turn+1)
   }
 
-  override def toString: String = s"BasicEncounter([$turn] $friends vs $foes)"
+  override def toString: String = s"BasicEncounter([$turn:$isFinished]\n\t$friends\n\tvs\n\t$foes)"
 }

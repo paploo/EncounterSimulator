@@ -19,5 +19,5 @@ case class SimpleCreature(name: String,
                           template: CreatureTemplate,
                           damage: Int = 0,
                           turnOfDeath: Option[Int] = None) extends Creature {
-  def applyDamage(dmg: Int): Creature = this.copy(damage = damage+dmg)
+  override def applyDamage(dmg: Int): Creature = this.copy(damage = damage+dmg)
 }

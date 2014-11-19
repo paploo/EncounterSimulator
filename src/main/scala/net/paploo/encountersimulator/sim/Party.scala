@@ -19,12 +19,15 @@ object Party {
   def empty: Party = PartySeq(Nil)
 }
 
-trait Party {
+trait PartyLike[+Repr] {
+  protected[this] type Self = Repr
+  protected[this] def build(m: Seq[PartyMember]): Repr
+
   def members: Seq[PartyMember]
   def creatures: Seq[Creature]
 
-  def alive: Party
-  def dead: Party
+  def alive: Repr
+  def dead: Repr
 
   def isAlive: Boolean
   def isDead: Boolean
@@ -34,25 +37,31 @@ trait Party {
   def apply(id: Int): PartyMember
 }
 
-abstract class AbstractParty extends Party {
+trait Party extends PartyLike[Party] {
   override val creatures: Seq[Creature] = members.map(_.creature)
 
-  def isAlive: Boolean = creatures.exists(_.isAlive)
-  def isDead: Boolean = !isAlive
+  override def alive: Self = build(members.filter(_.creature.isAlive))
+  override def dead: Self = build(members.filter(_.creature.isDead))
+
+  override def isAlive: Boolean = creatures.exists(_.isAlive)
+  override def isDead: Boolean = !isAlive
 
   override def apply(id: Int): PartyMember = members.find(_.id == id).get
 }
 
-case class PartySeq(members: Seq[PartyMember]) extends AbstractParty {
-  override lazy val alive: Party = PartySeq(members.filter(_.creature.isAlive))
-  override lazy val dead: Party = PartySeq(members.filter(_.creature.isDead))
+case class PartySeq(members: Seq[PartyMember]) extends Party with PartyLike[PartySeq] {
 
-  def applyDamage(damageMap: Map[PartyMember, Int]): Party = {
+  override protected[this] def build(m: Seq[PartyMember]): PartySeq = PartySeq(m)
+
+  override lazy val alive: PartySeq = super.alive
+  override lazy val dead: PartySeq = super.dead
+
+  override def applyDamage(damageMap: Map[PartyMember, Int]): PartySeq = {
     val newMembers = members.map { member =>
       val damage = damageMap.getOrElse(member, 0)
       val updatedCreature = member.creature.applyDamage(damage)
       member.copy(creature = updatedCreature)
     }
-    PartySeq(newMembers)
+    build(newMembers)
   }
 }

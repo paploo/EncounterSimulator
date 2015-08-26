@@ -19,6 +19,9 @@ trait Die extends DieExpression {
 }
 
 case class SidedDie(sideCount: Int, hasZero: Boolean = false) extends Die {
+
+  private[this] val offset: Int = if(hasZero) 0 else 1
+
   override val minValue: Int = offset
 
   override val maxValue: Int = (sideCount - 1) + offset
@@ -28,8 +31,6 @@ case class SidedDie(sideCount: Int, hasZero: Boolean = false) extends Die {
   override def value: Int = Random.nextInt(sideCount) + offset
 
   override lazy val sides: Seq[Int] = 0 until sideCount
-
-  private[this] val offset: Int = if(hasZero) 0 else 1
 }
 
 case class EnumeratedDie(sides: Seq[Int]) extends Die {

@@ -30,7 +30,7 @@ case class SidedDie(sideCount: Int, hasZero: Boolean = false) extends Die {
 
   override def value: Int = Random.nextInt(sideCount) + offset
 
-  override lazy val sides: Seq[Int] = 0 until sideCount
+  override lazy val sides: Seq[Int] = (0 until sideCount).map(_ + offset)
 }
 
 case class EnumeratedDie(sides: Seq[Int]) extends Die {

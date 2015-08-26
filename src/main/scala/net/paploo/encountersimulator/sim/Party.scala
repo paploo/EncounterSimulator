@@ -1,67 +1,49 @@
 package net.paploo.encountersimulator.sim
 
+
+import net.paploo.encountersimulator.sim.Creature.CreatureId
+
 import scala.language.higherKinds
 
-case class PartyMember(id: Int, creature: Creature)
-
 object Party {
-  def apply(creatures: Seq[Creature]): Party = {
-    val partyMembers = for {
-      id <- 0 until creatures.length
-      creature = creatures(id)
-    } yield PartyMember(id, creature)
+  def apply(creatures: Seq[Creature]): Party = PartySeq(None, creatures)
 
-    new PartySeq(partyMembers)
+  def apply(name: Option[String], creatures: Seq[Creature]): Party = PartySeq(name, creatures)
+}
+
+trait Party extends PartialFunction[CreatureId, Creature] with Livable {
+  def name: Option[String]
+
+  def creatures: Seq[Creature] = creatureMap.values.toSeq
+  def creatureMap: Map[CreatureId, Creature] = creatures.map(creature => creature.id -> creature).toMap
+
+  def apply(creatureId: CreatureId): Creature = creatureMap(creatureId)
+  def isDefinedAt(creatureId: CreatureId): Boolean = creatureMap.isDefinedAt(creatureId)
+
+  val aliveCreatures: Seq[Creature] = creatures.filter(_.isAlive)
+  val deadCreatures: Seq[Creature] = creatures.filter(_.isDead)
+
+  def isAlive: Boolean = !isDead
+  def isDead: Boolean = aliveCreatures.isEmpty
+
+  def updated(creature: Creature): Party
+}
+
+case class PartyMap(name: Option[String],
+                    override val creatureMap: Map[CreatureId, Creature]) extends Party {
+  override val creatures = super.creatures
+
+  override def updated(creature: Creature): Party = {
+    this.copy(creatureMap = creatureMap.updated(creature.id, creature))
   }
-
-  def unapply(party: Party): Option[Seq[Creature]] = Some(party.creatures)
-
-  def empty: Party = PartySeq(Nil)
 }
 
-trait PartyLike[+Repr] {
-  protected[this] type Self = Repr
-  protected[this] def build(m: Seq[PartyMember]): Repr
+case class PartySeq(name: Option[String],
+                    override val creatures: Seq[Creature]) extends Party {
+  override val creatureMap = super.creatureMap
 
-  def members: Seq[PartyMember]
-  def creatures: Seq[Creature]
-
-  def alive: Repr
-  def dead: Repr
-
-  def isAlive: Boolean
-  def isDead: Boolean
-
-  def applyDamage(damageMap: Map[PartyMember, Int]): Party
-
-  def apply(id: Int): PartyMember
-}
-
-trait Party extends PartyLike[Party] {
-  override val creatures: Seq[Creature] = members.map(_.creature)
-
-  override def alive: Self = build(members.filter(_.creature.isAlive))
-  override def dead: Self = build(members.filter(_.creature.isDead))
-
-  override def isAlive: Boolean = creatures.exists(_.isAlive)
-  override def isDead: Boolean = !isAlive
-
-  override def apply(id: Int): PartyMember = members.find(_.id == id).get
-}
-
-case class PartySeq(members: Seq[PartyMember]) extends Party with PartyLike[PartySeq] {
-
-  override protected[this] def build(m: Seq[PartyMember]): PartySeq = PartySeq(m)
-
-  override lazy val alive: PartySeq = super.alive
-  override lazy val dead: PartySeq = super.dead
-
-  override def applyDamage(damageMap: Map[PartyMember, Int]): PartySeq = {
-    val newMembers = members.map { member =>
-      val damage = damageMap.getOrElse(member, 0)
-      val updatedCreature = member.creature.applyDamage(damage)
-      member.copy(creature = updatedCreature)
-    }
-    build(newMembers)
+  override def updated(creature: Creature): Party = {
+    val index: Int = creatures.indexWhere(_.id == creature.id)
+    this.copy(creatures = creatures.updated(index, creature))
   }
 }

@@ -2,26 +2,28 @@ package net.paploo.encountersimulator.sim
 
 import scala.util.Random
 
-object EngagementStrategy {
-
-  def random: EngagementStrategy = new EngagementStrategyFunction(
-    (attackers, defenders, attacker) => {
-      val aliveDefenders = defenders.alive
-      if (aliveDefenders.members.isEmpty) None
-      else {
-        val len = aliveDefenders.members.length
-        Some(aliveDefenders.members(Random.nextInt(len)))
-      }
-    }
-  )
-
-}
-
 trait EngagementStrategy {
-  def defenderPartyMember(attackers: Party, defenders: Party)(attacker: PartyMember): Option[PartyMember]
+  def selectDefender(attacker: Creature, opposingParties: Seq[Party]): Option[Creature]
 }
 
-class EngagementStrategyFunction(val func: (Party, Party, PartyMember) => Option[PartyMember]) extends EngagementStrategy {
-  def defenderPartyMember(attackers: Party, defenders: Party)(attacker: PartyMember): Option[PartyMember] =
-    func(attackers, defenders, attacker)
+class EngageFirstStrategy extends EngagementStrategy {
+  override def selectDefender(attacker: Creature, opposingParties: Seq[Party]): Option[Creature] = for {
+    party <- opposingParties.find(_.isAlive)
+    creature <- party.creatures.find(_.isAlive)
+  } yield creature
+}
+
+class EngageStrongest extends EngagementStrategy {
+  def selectDefender(attacker: Creature, opposingParties: Seq[Party]): Option[Creature] = {
+    //TODO: Make more efficient
+    val defenders: Seq[Creature] = opposingParties.foldLeft(Seq.empty[Creature])(_ ++ _.creatures)
+    if(defenders.isEmpty) None else Some(defenders.maxBy(_.template.difficultyScore))
+  }
+}
+
+class EngageRandom extends EngagementStrategy {
+  def selectDefender(attacker: Creature, opposingParties: Seq[Party]): Option[Creature] = {
+    val defenders: Seq[Creature] = opposingParties.foldLeft(Seq.empty[Creature])(_ ++ _.creatures)
+    if(defenders.isEmpty) None else Some(defenders(Random.nextInt(defenders.length)))
+  }
 }

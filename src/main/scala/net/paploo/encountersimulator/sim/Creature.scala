@@ -1,23 +1,42 @@
 package net.paploo.encountersimulator.sim
 
-trait Creature {
-  def name: String
+import java.util.UUID
+
+import scala.language.implicitConversions
+
+import net.paploo.encountersimulator.sim.Creature.CreatureId
+
+object Creature {
+  type CreatureId = UUID
+
+  def apply(template: CreatureTemplate): Creature = SimpleCreature(template = template)
+
+  def apply(name: Option[String], template: CreatureTemplate): Creature = SimpleCreature(name = name, template = template)
+
+  def createId: CreatureId = UUID.randomUUID
+
+  object Conversions {
+    implicit def creatureToCreatureId(creature: Creature): CreatureId = creature.id
+  }
+}
+
+trait Creature extends Livable {
+  def id: CreatureId = Creature.createId
+  def name: Option[String]
   def template: CreatureTemplate
   def damage: Int
-  def turnOfDeath: Option[Int]
 
-  def isAlive: Boolean = damage < hitPoints
+  def remainingHitPoints = template.hitPoints - damage
+
+  def isAlive: Boolean = remainingHitPoints > 0
   def isDead: Boolean = !isAlive
-
-  def hitPoints: Int = template.hitPoints
-  def damageRate: Int = template.damageRate
 
   def applyDamage(dmg: Int): Creature
 }
 
-case class SimpleCreature(name: String,
+case class SimpleCreature(override val id: CreatureId = Creature.createId,
+                          name: Option[String] = None,
                           template: CreatureTemplate,
-                          damage: Int = 0,
-                          turnOfDeath: Option[Int] = None) extends Creature {
+                          damage: Int = 0) extends Creature {
   override def applyDamage(dmg: Int): Creature = this.copy(damage = damage+dmg)
 }

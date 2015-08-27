@@ -20,8 +20,8 @@ trait Party extends PartialFunction[CreatureId, Creature] with Livable {
   def apply(creatureId: CreatureId): Creature = creatureMap(creatureId)
   def isDefinedAt(creatureId: CreatureId): Boolean = creatureMap.isDefinedAt(creatureId)
 
-  val aliveCreatures: Seq[Creature] = creatures.filter(_.isAlive)
-  val deadCreatures: Seq[Creature] = creatures.filter(_.isDead)
+  def aliveCreatures: Seq[Creature] = creatures.filter(_.isAlive)
+  def deadCreatures: Seq[Creature] = creatures.filter(_.isDead)
 
   def isAlive: Boolean = !isDead
   def isDead: Boolean = aliveCreatures.isEmpty
@@ -31,7 +31,10 @@ trait Party extends PartialFunction[CreatureId, Creature] with Livable {
 
 case class PartyMap(name: Option[String],
                     override val creatureMap: Map[CreatureId, Creature]) extends Party {
+  // Cache these values up-front, rather than re-derive them each time.
   override val creatures = super.creatures
+  override val aliveCreatures = super.aliveCreatures
+  override val deadCreatures = super.deadCreatures
 
   override def updated(creature: Creature): Party = {
     this.copy(creatureMap = creatureMap.updated(creature.id, creature))
@@ -40,7 +43,10 @@ case class PartyMap(name: Option[String],
 
 case class PartySeq(name: Option[String],
                     override val creatures: Seq[Creature]) extends Party {
+  // Cache these values up-front, rather than re-derive them each time.
   override val creatureMap = super.creatureMap
+  override val aliveCreatures = super.aliveCreatures
+  override val deadCreatures = super.deadCreatures
 
   override def updated(creature: Creature): Party = {
     val index: Int = creatures.indexWhere(_.id == creature.id)

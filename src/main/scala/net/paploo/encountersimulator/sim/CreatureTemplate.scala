@@ -5,7 +5,7 @@ import net.paploo.encountersimulator.die.{Constant, DieExpression}
 object CreatureTemplate {
   def apply(name: Option[String], hitPoints: Int, attack: DieExpression, defense: Int, damage: DieExpression): CreatureTemplate = apply(name, hitPoints, attack, Constant(defense), damage)
 
-  def apply(name: Option[String], hitPoints: Int, attack: DieExpression, defense: DieExpression, damage: DieExpression): CreatureTemplate = SimpleCreatureTemplate(name, hitPoints, attack, defense, damage)
+  def apply(name: Option[String], hitPoints: Int, attack: DieExpression, defense: DieExpression, damage: DieExpression): CreatureTemplate = ImmutableCreatureTemplate(name, hitPoints, attack, defense, damage)
 }
 
 trait CreatureTemplate {
@@ -18,7 +18,7 @@ trait CreatureTemplate {
   def difficultyScore: Double = damage.expectationValue * hitPoints
 }
 
-case class SimpleCreatureTemplate(name: Option[String] = None,
+case class ImmutableCreatureTemplate(name: Option[String] = None,
                                   hitPoints: Int,
                                   attack: DieExpression,
                                   defense: DieExpression,

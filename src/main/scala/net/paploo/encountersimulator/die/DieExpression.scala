@@ -2,6 +2,24 @@ package net.paploo.encountersimulator.die
 
 import scala.util.Random
 
+object DieExpression {
+  def apply(sides: Int) = SidedDie(sides)
+
+  def apply(count: Int, sides: Int) = Group(count, SidedDie(sides))
+
+  def apply(count: Int, sides: Int, modifier: Int) = Sum(Seq(Group(count, SidedDie(sides)), Constant(modifier)))
+
+  def apply(expr: String) = ??? //TODO: Parse expression strings.
+
+  val d4 = SidedDie(4)
+  val d6 = SidedDie(6)
+  val d8 = SidedDie(8)
+  val d10 = SidedDie(10)
+  val d12 = SidedDie(12)
+  val d20 = SidedDie(20)
+  val `d%` = SidedDie(100, hasZero = true)
+}
+
 trait DieExpression {
   def minValue: Int
   def maxValue: Int

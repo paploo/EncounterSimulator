@@ -159,7 +159,7 @@ class DieExpressionTest extends SpecTest {
     it("should produce significantly more means than mins") {
       val values = (1 until sampleSize).map(_ => expr.value)
       val freqs = values.groupBy(identity)
-      freqs(expectation2d6.toInt).length should be > freqs(2).length
+      freqs.getOrElse(expectation2d6.toInt, Nil).length should be > freqs.getOrElse(2, Nil).length
     }
 
   }

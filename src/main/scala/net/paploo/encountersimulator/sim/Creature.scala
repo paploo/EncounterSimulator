@@ -9,10 +9,14 @@ import net.paploo.encountersimulator.sim.Creature.CreatureId
 object Creature {
   type CreatureId = UUID
 
-  def apply(template: CreatureTemplate): Creature = SimpleCreature(template = template)
+  def apply(template: CreatureTemplate): Creature = ImmutableCreature(template = template)
 
-  def apply(name: Option[String], template: CreatureTemplate): Creature = SimpleCreature(name = name, template = template)
+  def apply(name: Option[String], template: CreatureTemplate): Creature = ImmutableCreature(name = name, template = template)
 
+  /**
+   * This is a non-pure method, but that isn't a desired property.
+   * @return
+   */
   def createId: CreatureId = UUID.randomUUID
 
   object Conversions {
@@ -24,17 +28,17 @@ trait Creature extends Livable {
   def id: CreatureId = Creature.createId
   def name: Option[String]
   def template: CreatureTemplate
-  def damage: Int
+  def damage: Int // The total damage.
 
-  def remainingHitPoints = template.hitPoints - damage
+  def life = template.hitPoints - damage
 
-  def isAlive: Boolean = remainingHitPoints > 0
+  def isAlive: Boolean = life > 0
   def isDead: Boolean = !isAlive
 
   def applyDamage(dmg: Int): Creature
 }
 
-case class SimpleCreature(override val id: CreatureId = Creature.createId,
+case class ImmutableCreature(override val id: CreatureId = Creature.createId,
                           name: Option[String] = None,
                           template: CreatureTemplate,
                           damage: Int = 0) extends Creature {

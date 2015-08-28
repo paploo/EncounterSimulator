@@ -31,7 +31,7 @@ class PartyTest extends SpecTest with SharedPartyTestExamples {
 
       it should behave like livingParty(party)
       it should behave like partialFunctionById(party, creatureTwo, unknownCreature)
-      it should behave like updatableParty(party, creatureTwo)
+      it should behave like updatableParty(party, creatureTwo.id)
 
     }
     
@@ -41,7 +41,7 @@ class PartyTest extends SpecTest with SharedPartyTestExamples {
 
       it should behave like deadParty(party)
       it should behave like partialFunctionById(party, deadCreature, unknownCreature)
-      it should behave like updatableParty(party, deadCreature)
+      it should behave like updatableParty(party, deadCreature.id)
       
     }
     
@@ -51,7 +51,7 @@ class PartyTest extends SpecTest with SharedPartyTestExamples {
 
       it should behave like livingParty(party)
       it should behave like partialFunctionById(party, creatureTwo, unknownCreature)
-      it should behave like updatableParty(party, deadCreature)
+      it should behave like updatableParty(party, deadCreature.id)
 
     }
 
@@ -73,7 +73,7 @@ class PartyTest extends SpecTest with SharedPartyTestExamples {
 
       it should behave like livingParty(party)
       it should behave like partialFunctionById(party, creatureTwo, unknownCreature)
-      it should behave like updatableParty(party, creatureTwo)
+      it should behave like updatableParty(party, creatureTwo.id)
 
     }
 
@@ -83,7 +83,7 @@ class PartyTest extends SpecTest with SharedPartyTestExamples {
 
       it should behave like deadParty(party)
       it should behave like partialFunctionById(party, deadCreature, unknownCreature)
-      it should behave like updatableParty(party, deadCreature)
+      it should behave like updatableParty(party, deadCreature.id)
 
     }
 
@@ -93,7 +93,7 @@ class PartyTest extends SpecTest with SharedPartyTestExamples {
 
       it should behave like livingParty(party)
       it should behave like partialFunctionById(party, creatureTwo, unknownCreature)
-      it should behave like updatableParty(party, deadCreature)
+      it should behave like updatableParty(party, deadCreature.id)
 
     }
 
@@ -157,16 +157,30 @@ trait SharedPartyTestExamples {
 
   def partialFunctionById(party: Party, expectedCreature: Creature, unexpectedCreature: Creature): Unit = {
 
-    it("should act like a partial function") {
-      pending
+    it("should  have the expected creature") {
+      party.isDefinedAt(expectedCreature.id) should be (true)
+      party(expectedCreature.id) should be(expectedCreature)
+    }
+
+    it("should not have the unexpected creature") {
+      party.isDefinedAt(unexpectedCreature.id) should be (false)
     }
 
   }
 
-  def updatableParty(party: Party, updatedCreature: Creature) = {
+  def updatableParty(party: Party, creatureId: Creature.CreatureId) = {
 
-    it("should act like an updatable party") {
-      pending
+    it("should update the appropriate creature") {
+      Given("a party with a creature")
+      val creature = party(creatureId)
+
+      When("we update the creature")
+      val updatedCreature = creature.applyDamage(1000)
+      val updatedParty = party.updated(updatedCreature)
+
+      Then("we should get a new party with the updated creature")
+      updatedParty.isDefinedAt(creatureId) should be (true)
+      updatedParty(creatureId) should === (updatedCreature)
     }
 
   }
